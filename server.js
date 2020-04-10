@@ -69,8 +69,7 @@ function addDepartments() {
         message: "What department would you like to add?"
     }).then(answer => {
         let query = "INSERT INTO department (name) VALUES ?;";
-        connection.query(query, answer.addDepartment, function (err, res) {
-            console.log("Added department!")
+        connection.query(query, [answer.addDepartment], function (err, res) {
             runSearch();
         });
     })
@@ -90,9 +89,9 @@ function addRoles() {
         type: "input",
         message: "What department do you want to assign this role to?"
     }]).then(answer => {
-        let query = "SELECT id FROM department WHERE name = ?;";
+        const query = "SELECT id FROM department WHERE name = ?;";
         connection.query(query, answer.department, function (err, res) {
-            let savedId = res.id;
+            const savedId = res.id;
             connection.query("INSERT INTO role SET ?",
                 {
                     title: answer.title,
@@ -128,25 +127,30 @@ function addEmployees() {
 
 function viewDepartments() {
     connection.query("SELECT * FROM department", function (err, res) {
-        const table = cTable.getTable('Departments', [res]);
-        console.log(table);
+        console.table(res);
+        runSearch();
     })
 }
 
-function viewRoles(){
+function viewRoles() {
     connection.query("SELECT * FROM role", function (err, res) {
-        const table = cTable.getTable('Roles', [res]);
-        console.log(table);
+        console.table(res);
+        runSearch();
     })
 }
 
-function viewEmployees(){
+function viewEmployees() {
     connection.query("SELECT * FROM employee", function (err, res) {
-        const table = cTable.getTable('Employees', [res]);
-        console.log(table);
+        console.table(res);
+        runSearch();
     })
 }
 
-function updateRoles(){
-    
+function updateRoles() {
+    connection.query("SELECT * FROM employee", function (err, res) {
+        for (var i = 0; i < res.length; i++) {
+            console.log(`${res[i].first_name} ${res[i].last_name}`);
+        }
+    });
+
 }
