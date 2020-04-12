@@ -224,7 +224,7 @@ function updateRoles() {
                                 const query = `UPDATE employee SET role_id = ${roleId} WHERE id = ${employeeId};`
                                 connection.query(query, function (err, res) {
                                     if (err) throw err;
-                                    console.log(res);
+                                    console.log("Updated Role!")
                                 })
                             })
                         })
