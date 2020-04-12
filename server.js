@@ -132,27 +132,40 @@ function addEmployees() {
             message: "What role will this employee have?",
             choices: choicesArray
         }]).then(answer => {
-            console.log(answer.role);
+            const firstName = answer.firstName;
+            const lastName = answer.lastName;
             const query = `SELECT id FROM role WHERE title = "${answer.role}";`;
             connection.query(query, function (err, res) {
                 if (err) throw err;
                 const savedId = res[0].id;
-                const query = "SELECT CONCAT(first_name, ' ', last_name) FROM employee;";
+                const query = "SELECT CONCAT(first_name, ' ', last_name) AS name FROM employee;";
                 connection.query(query, function (err, res) {
                     if (err) throw err;
-                    let choicesArray = res.map(item => { return item. });
-                    choicesArray.push({ name: "None", value: null });
-                    console.log(choicesArray);
+                    let choicesArray = res.map(item => { return item });
+                    choicesArray.push({ name: "None" });
                     inquirer.prompt([{
                         name: "managerName",
                         type: "list",
                         message: "Who is this employee's manager?",
-                        choices: res
-                    }])
+                        choices: choicesArray
+                    }]).then(answer => {
+                        if (answer.managerName === "None") {
+                            connection.query(`INSERT INTO employee (first_name, last_name, role_id) VALUES ("${firstName}", "${lastName}", ${savedId});`), function (err, res) {
+                                if (err) throw err;
+                                runSearch();
+                            }
+                        } else {
+                            const query = `SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${answer.managerName}";`;
+                            connection.query(query, function (err, res) {
+                                if (err) throw err;
+                                connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.firstName}", "${answer.lastName}", ${savedId}, ${res[0].id});`), function (err, res) {
+                                    if (err) throw err;
+                                    runSearch();
+                                }
+                            })
 
-                    connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.firstName}", "${answer.lastName}", ${savedId}, );`), function (err, res) {
-                        runSearch();
-                    }
+                        }
+                    })
                 })
             });
         })
