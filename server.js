@@ -81,7 +81,6 @@ function addRoles() {
     const query = `SELECT name FROM department`;
     connection.query(query, function (err, res) {
         if (err) throw err;
-        console.log(res);
         inquirer.prompt([{
             name: "title",
             type: "input",
@@ -101,7 +100,6 @@ function addRoles() {
             connection.query(query, function (err, res) {
                 if (err) throw err;
                 const savedId = res[0].id;
-                console.log(savedId);
                 connection.query(`INSERT INTO role (title, salary, department_id) VALUES ("${answer.title}", ${answer.salary}, ${savedId});`, function (err, res) {
                     runSearch();
                 })
@@ -150,26 +148,26 @@ function addEmployees() {
                         choices: choicesArray
                     }]).then(answer => {
                         if (answer.managerName === "None") {
-                            connection.query(`INSERT INTO employee (first_name, last_name, role_id) VALUES ("${firstName}", "${lastName}", ${savedId});`), function (err, res) {
+                            connection.query(`INSERT INTO employee (first_name, last_name, role_id) VALUES ("${firstName}", "${lastName}", ${savedId});`, function (err, res) {
                                 if (err) throw err;
                                 runSearch();
-                            }
+                            })
                         } else {
                             const query = `SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${answer.managerName}";`;
                             connection.query(query, function (err, res) {
                                 if (err) throw err;
-                                connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.firstName}", "${answer.lastName}", ${savedId}, ${res[0].id});`), function (err, res) {
+                                console.log('res from select', res)
+                                connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${firstName}", "${lastName}", ${savedId}, ${res[0].id});`, function (err, res) {
                                     if (err) throw err;
                                     runSearch();
-                                }
+                                });
                             })
-
                         }
                     })
-                })
-            });
+                });
+            })
         })
-    })
+    });
 }
 
 function viewDepartments() {
@@ -197,17 +195,41 @@ function viewEmployees() {
 }
 
 function updateRoles() {
-    connection.query("SELECT first_name, last_name FROM employee;", function (err, res) {
+    connection.query(`SELECT CONCAT(first_name, ' ', last_name) AS name FROM employee;`, function (err, res) {
         if (err) throw err;
-        console.log(res);
         inquirer.prompt(
             {
-                name: "department",
+                name: "employee",
                 type: "list",
-                message: "What department do you want to assign this role to?",
+                message: "What employee do you want to update the role for?",
                 choices: res
             }).then(answer => {
-                console.log(answer);
+                connection.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${answer.employee}";`, function (err, res) {
+                    if (err) throw err;
+                    const employeeId = res[0].id;
+                    const query = `SELECT title FROM role`;
+                    connection.query(query, function (err, res) {
+                        if (err) throw err;
+                        let choicesArray = res.map(item => { return item.title });
+                        inquirer.prompt({
+                            name: "newRole",
+                            type: "list",
+                            message: "What would you like to change their role to?",
+                            choices: choicesArray
+                        }).then(answer => {
+                            const query = `SELECT id FROM role WHERE title = "${answer.newRole}";`;
+                            connection.query(query, function (err, res) {
+                                if (err) throw err;
+                                const roleId = res[0].id;
+                                const query = `UPDATE employee SET role_id = ${roleId} WHERE id = ${employeeId};`
+                                connection.query(query, function (err, res) {
+                                    if (err) throw err;
+                                    console.log(res);
+                                })
+                            })
+                        })
+                    })
+                })
             })
     });
 
